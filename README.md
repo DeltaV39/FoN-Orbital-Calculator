@@ -12,3 +12,7 @@ Python is included in almost all distributions, but not all of these have versio
 If Python 3 comes with your distribution, chances are it doesn't include the extra modules. These will need to be installed, either with pip or with your distribution's package management tool. In this case the modules are `python3-numpy`, `python3-tk`, and `python3-matplotlib`.
 
 After completing the OS-specific installation of Python, download and run `FoN-orbit-calc.py`.
+
+# Usage
+This program assumes circular orbits for both your craft and your target.
+Enter the altitude of your current orbit and the orbit you wish to transfer to. The "Delta longitude" is the longitude difference between you and your target at which you should perform your burn. Positive values mean the target should be ahead of you, negative values mean it should be behind.
