@@ -14,5 +14,6 @@ If Python 3 comes with your distribution, chances are it doesn't include the ext
 After completing the OS-specific installation of Python, download and run `FoN-orbit-calc.py`.
 
 # Usage
-This program assumes circular orbits for both your craft and your target.
-Enter the altitude of your current orbit and the orbit you wish to transfer to. The "Delta longitude" is the longitude difference between you and your target at which you should perform your burn. Positive values mean the target should be ahead of you, negative values mean it should be behind.
+This program assumes circular initial orbits for both your craft and your target.
+Enter the altitude of your current orbit and the altitude of your target. The "Delta longitude" is the longitude difference between you and your target at which you should perform your burn. Positive values mean the target should be ahead of you in the orbit, negative values mean it should be behind. This allows the target to 'catch up' with you if you are coming from a higher, slower orbit. The reverse applies for a lower, faster orbit.
+When the difference between your longitude and the station's longitude is at the right value, burn so that your orbit just touches that of the target. So if you are ascending, you should match your apoapsis with the target's altitude, and if you're descending, match your periapsis with target's altitude. Then, wait :)
