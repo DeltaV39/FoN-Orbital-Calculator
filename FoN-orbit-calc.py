@@ -12,6 +12,7 @@ from matplotlib.patches import Circle
 
 
 R = 6350000	# Radius of NVA-3
+mu = 398600441800000 # Standard gravitational parameter of NVA-3 (assuming identical mass to earth)
 
 def recalc_burn_params(*args):
 	try:
@@ -21,10 +22,13 @@ def recalc_burn_params(*args):
 		delta_longitude_degrees.set(180 * (1 - np.power((r_i[0] + r_f[0])/(2*r_f[0]), 3/2)))	# the formula :O
 		b = a_i.get()+R/1000
 		c = a_f.get()+R/1000
-		burn_distance.set(np.sqrt(b**2+c**2 - 2*b*c*np.cos(np.radians(delta_longitude_degrees.get()))))
 		delta_longitude_degrees.set(delta_longitude_degrees.get() % (360*np.sign(delta_longitude_degrees.get())))	# can be optimised
 		if abs(delta_longitude_degrees.get()) > 180:
 			delta_longitude_degrees.set(360 - abs(delta_longitude_degrees.get()))	# can DEFINITELY be optimised
+		
+		burn_distance.set(np.sqrt(b**2+c**2 - 2*b*c*np.cos(np.radians(delta_longitude_degrees.get()))))
+		
+		transfer_duration.set(round((np.pi*np.sqrt((((r_i[0]+r_f[0])/2)**3)/mu))/60, 1))
 		
 		theta = np.linspace(0, 2*np.pi, num = 1000)
 		
@@ -40,6 +44,7 @@ def recalc_burn_params(*args):
 		transfer_orbit_trace.set_data(theta[theta.size//2:], r_transfer[theta.size//2:])
 		ship.set_data(0, r_i[0])
 		station.set_data(np.radians(delta_longitude_degrees.get()), r_f[0])
+		rendezvous_point.set_data(np.pi, r_f[0])
 		
 		ax.set_rmax(max(r_i[0], r_f[0])*1.1)
 		
@@ -66,6 +71,7 @@ a_i = DoubleVar(value = 185.0)
 a_f = DoubleVar(value = 3058.0)
 delta_longitude_degrees = DoubleVar()
 burn_distance = DoubleVar(value = 1000)
+transfer_duration = DoubleVar(value = 1)
 
 frm = ttk.Frame(root, padding=10)
 frm.grid()
@@ -92,6 +98,11 @@ burn_distance_label = ttk.Label(frm, textvariable = burn_distance)
 burn_distance_label.grid(column = 1, row = 3)
 ttk.Label(frm, text="km").grid(column = 2, row = 3)
 
+ttk.Label(frm, text = "Transfer duration").grid(column = 0, row = 4)
+transfer_duration_label = ttk.Label(frm, textvariable = transfer_duration)
+transfer_duration_label.grid(column = 1, row = 4)
+ttk.Label(frm, text="min").grid(column = 2, row = 4)
+
 # ~ set up canvas for orbit plots
 
 theta = np.linspace(0, 2*np.pi, num = 1000)
@@ -113,7 +124,7 @@ ax.set_facecolor("midnightblue")
 planet = Circle((0,0), R, transform=ax.transData._b, facecolor = "teal", edgecolor = "dimgrey")
 ax.add_artist(planet)
 initial_orbit, = ax.plot(theta, r_i, color = "red")
-final_orbit, = ax.plot(theta, r_f, color = "blue")
+final_orbit, = ax.plot(theta, r_f, color = "skyblue")
 transfer_orbit, = ax.plot(theta[:theta.size//2], r_transfer[:theta.size//2], color = "limegreen")
 transfer_orbit_trace, = ax.plot(theta[theta.size//2:], r_transfer[theta.size//2:], color = "limegreen", linestyle = 'dashed')
 ship, = ax.plot(0, r_i[0], color = "white", marker = "^", markersize = 15)
