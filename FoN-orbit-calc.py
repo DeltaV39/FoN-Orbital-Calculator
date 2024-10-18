@@ -16,59 +16,52 @@ mu = 398600441800000 # Standard gravitational parameter of NVA-3 (assuming ident
 
 def recalc_burn_params(*args):
 	try:
-		theta = np.linspace(0, 2*np.pi, num = 1000)
-		r_i = np.full_like(theta, a_i.get()*1000 + R)
-		r_f = np.full_like(theta, a_f.get()*1000 + R)
-		delta_longitude_degrees.set(180 * (1 - np.power((r_i[0] + r_f[0])/(2*r_f[0]), 3/2)))	# the formula :O
-		b = a_i.get()+R/1000
-		c = a_f.get()+R/1000
-		delta_longitude_degrees.set(delta_longitude_degrees.get() % (360*np.sign(delta_longitude_degrees.get())))	# can be optimised
+		r_i = a_i.get()*1000 + R
+		r_f = a_f.get()*1000 + R
+		delta_longitude_degrees.set(180 * (1 - np.power((r_i + r_f)/(2*r_f), 3/2)))	# the formula :O
+		delta_longitude_degrees.set(round(delta_longitude_degrees.get() % (360*np.sign(delta_longitude_degrees.get())), 2))	# can be optimised
 		if abs(delta_longitude_degrees.get()) > 180:
 			delta_longitude_degrees.set(360 - abs(delta_longitude_degrees.get()))	# can DEFINITELY be optimised
 		
-		burn_distance.set(np.sqrt(b**2+c**2 - 2*b*c*np.cos(np.radians(delta_longitude_degrees.get()))))
+		burn_distance.set(round(np.sqrt(r_i**2+r_f**2 - 2*r_i*r_f*np.cos(np.radians(delta_longitude_degrees.get())))/1000, 2))
 		
-		transfer_duration.set(round((np.pi*np.sqrt((((r_i[0]+r_f[0])/2)**3)/mu))/60, 1))
+		transfer_duration.set(round((np.pi*np.sqrt((((r_i+r_f)/2)**3)/mu))/60, 1))
 		
-		theta = np.linspace(0, 2*np.pi, num = 1000)
+		c = -(r_f-r_i)/2
 		
-		c = -(a_f.get()*1000-a_i.get()*1000)/2
-
-		a = R + a_i.get()*1000/2 + a_f.get()*1000/2
-
-		r_transfer = (-a**2 +c**2)/(-a + c*np.cos(theta))
+		a = (r_i+r_f)/2
 		
-		initial_orbit.set_data(theta, r_i)
-		final_orbit.set_data(theta, r_f)
-		transfer_orbit.set_data(theta[:theta.size//2], r_transfer[:theta.size//2])
-		transfer_orbit_trace.set_data(theta[theta.size//2:], r_transfer[theta.size//2:])
-		ship.set_data(0, r_i[0])
-		station.set_data(np.radians(delta_longitude_degrees.get()), r_f[0])
-		rendezvous_point.set_data(np.pi, r_f[0])
+		update_plot(r_f, r_i, a, c)
 		
-		ax.set_rmax(max(r_i[0], r_f[0])*1.1)
-		
-		canvas.draw()
 	except TclError:
 		return
 
-def initial_altitude_changed(*args):
-	print("initial altitude was changed")
-	recalc_burn_params()
-	print(f"delta longitude is now {delta_longitude_degrees.get()}")
-	return
+def update_plot(r_f, r_i, a, c):
+	theta = np.linspace(0, 2*np.pi, num = 1000)
+	r_transfer = (-a**2 +c**2)/(-a + c*np.cos(theta))
 	
-def final_altitude_changed(*args):
-	print("final altitude was changed")
+	initial_orbit.set_data(theta, np.full_like(theta, r_i))
+	final_orbit.set_data(theta, np.full_like(theta, r_f))
+	transfer_orbit.set_data(theta[:theta.size//2], r_transfer[:theta.size//2])
+	transfer_orbit_trace.set_data(theta[theta.size//2:], r_transfer[theta.size//2:])
+	ship.set_data(0, r_i)
+	station.set_data(np.radians(delta_longitude_degrees.get()), r_f)
+	rendezvous_point.set_data(np.pi, r_f)
+	
+	ax.set_rmax(max(r_i, r_f)*1.1)
+	
+	canvas.draw()
+	return
+
+def altitude_changed(*args):
 	recalc_burn_params()
-	print(f"delta longitude is now {delta_longitude_degrees.get()}")
 	return
 
 root = Tk()
 root.wm_title("Inter-orbital Rendezvous Calculator")
 
 a_i = DoubleVar(value = 185.0)
-a_f = DoubleVar(value = 3058.0)
+a_f = DoubleVar(value = 1058.0)
 delta_longitude_degrees = DoubleVar()
 burn_distance = DoubleVar(value = 1000)
 transfer_duration = DoubleVar(value = 1)
@@ -79,13 +72,13 @@ frm.grid()
 ttk.Label(frm, text="Initial altitude").grid(column=0, row=0)
 a_i_Entry = ttk.Entry(frm, textvariable = a_i)
 a_i_Entry.grid(column = 1, row = 0)
-a_i.trace_add("write", initial_altitude_changed)
+a_i.trace_add("write", altitude_changed)
 ttk.Label(frm, text="km").grid(column = 2, row = 0)
 
 ttk.Label(frm, text="Final altitude").grid(column=0, row=1)
 a_f_Entry = ttk.Entry(frm, textvariable = a_f)
 a_f_Entry.grid(column = 1, row = 1)
-a_f.trace_add("write", final_altitude_changed)
+a_f.trace_add("write", altitude_changed)
 ttk.Label(frm, text="km").grid(column = 2, row = 1)
 
 ttk.Label(frm, text = "Delta Longitude").grid(column = 0, row = 2)
@@ -106,12 +99,14 @@ ttk.Label(frm, text="min").grid(column = 2, row = 4)
 # ~ set up canvas for orbit plots
 
 theta = np.linspace(0, 2*np.pi, num = 1000)
-r_i = np.full_like(theta, a_i.get()*1000 + R)
-r_f = np.full_like(theta, a_f.get()*1000 + R)
+r_i = a_i.get()*1000 + R
+r_f = a_f.get()*1000 + R
 
-c = -(a_f.get()*1000-a_i.get()*1000)/2
+# ~ elliptical orbit parameters
 
-a = R + a_i.get()*1000/2 + a_f.get()*1000/2
+c = -(r_f-r_i)/2
+
+a = (r_i+r_f)/2
 
 r_transfer = (-a**2 +c**2)/(-a + c*np.cos(theta))
 
@@ -123,14 +118,15 @@ ax.spines['polar'].set_visible(False)
 ax.set_facecolor("midnightblue")
 planet = Circle((0,0), R, transform=ax.transData._b, facecolor = "teal", edgecolor = "dimgrey")
 ax.add_artist(planet)
-initial_orbit, = ax.plot(theta, r_i, color = "red")
-final_orbit, = ax.plot(theta, r_f, color = "skyblue")
+initial_orbit, = ax.plot(theta, np.full_like(theta, r_i), color = "red")
+final_orbit, = ax.plot(theta, np.full_like(theta, r_f), color = "skyblue")
 transfer_orbit, = ax.plot(theta[:theta.size//2], r_transfer[:theta.size//2], color = "limegreen")
 transfer_orbit_trace, = ax.plot(theta[theta.size//2:], r_transfer[theta.size//2:], color = "limegreen", linestyle = 'dashed')
-ship, = ax.plot(0, r_i[0], color = "white", marker = "^", markersize = 15)
-station, = ax.plot(np.radians(delta_longitude_degrees.get()), r_f[0], color = "skyblue", marker = "D", markersize = 12)
-rendezvous_point, = ax.plot(np.pi, r_f[0], color = "orange", marker = "X", markersize = 12)
-ax.set_rmax(max(r_i[0], r_f[0])*1.1)
+ship, = ax.plot(0, r_i, color = "white", marker = "^", markersize = 15)
+station, = ax.plot(np.radians(delta_longitude_degrees.get()), r_f, color = "skyblue", marker = "D", markersize = 12)
+rendezvous_point, = ax.plot(np.pi, r_f, color = "orange", marker = "X", markersize = 12)
+
+ax.set_rmax(max(r_i, r_f)*1.1)
 ax.set_rticks([])	# No radial ticks
 ax.set_rgrids([])	# No radial grids
 ax.set_theta_offset(np.pi)
@@ -142,7 +138,7 @@ canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
 
 recalc_burn_params()
 
-canvas.get_tk_widget().grid(column = 4, row = 0, rowspan = 4, padx = 4, pady = 4)
+canvas.get_tk_widget().grid(column = 4, row = 0, padx = 4, pady = 4)
 
 
 def on_closing():
