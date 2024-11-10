@@ -15,10 +15,11 @@ from matplotlib.lines import Line2D
 R = 6350    # Radius of NVA-3 in km
 M = 5.9722e24
 mu = 398600441800000 # Standard gravitational parameter of NVA-3 (assuming identical mass to earth)
+scaled_G = scipy.constants.G/(1000**3)
 
-def ang_speed_from_r(altitude):
+def circular_orbit_dtheta(r):
     
-    speed = np.sqrt((scipy.constants.G*M)/np.power(altitude,3))
+    speed = np.sqrt((scaled_G*M)/np.power(r,3))
     
     return speed
 
@@ -55,7 +56,7 @@ def gravity_ODE(x):
     theta = x[0,1]
     dr = x[1,0]
     dtheta = x[1,1]
-    d2r = dr + r*np.power(dtheta,2) - (scipy.constants.G*M)/np.power(r,2)
+    d2r = r*np.power(dtheta,2) - (scaled_G*M)/np.power(r,2)
     d2theta = -(2*dr*dtheta)/r
     
     return np.array([[dr, dtheta], [d2r, d2theta]])
@@ -70,33 +71,37 @@ def velocity_verlet(ODE, s, timestep):
 
 def calc_trajectory():
     result = [initial_state]
-    while (result[-1][0,1] < 2*np.pi) and (result[-1][0,0] < r_f):
+    print(result)
+    while (result[-1][0,1] < 2*np.pi) and (70+R < result[-1][0,0] < r_f):
         result.append(velocity_verlet(gravity_ODE, result[-1], 1))
     
     states_array = np.array(result)
     transposed = np.transpose(states_array, (1,2,0))
+    # ~ print(transposed)
     return transposed[0]
 
 def altitude_changed(*args):
     try:
         r_i = a_i.get() + R
         r_f = a_f.get() + R
-        initial_state = np.array([[r_i, 0], [0, ang_speed_from_r(r_i)]])
+        initial_state = np.array([[r_i, 0], [0, circular_orbit_dtheta(r_i)+tangential_deltav.get()]])
+        print(initial_state)
     except TclError:
+        print("You entered something strange")
         return
     
     # update plot with new altitudes
-    initial_state[0,0] = r_i
     trajectory = calc_trajectory()
     update_plot(trajectory)
     return
     
 def burn_changed(*args):
-    # update plot with new trajectory and update ship sprite
+    # update plot with new trajectory
     initial_state[1,0] = radial_deltav.get()
-    initial_state[1,1] = ang_speed_from_r(r_i) + tangential_deltav.get()/r_i
+    initial_state[1,1] = circular_orbit_dtheta(r_i) + tangential_deltav.get()/r_i
     trajectory = calc_trajectory()
     update_plot(trajectory)
+    # update ship sprite
     return
 
 def update_plot(trajectory):
@@ -105,7 +110,8 @@ def update_plot(trajectory):
     transfer_orbit.set_data(trajectory[1],trajectory[0])
     ship.set_data(0, r_i)
     # ~ station.set_data(np.radians(delta_longitude_degrees.get()), r_f)
-    # ~ rendezvous_point.set_data(np.pi, r_f)
+    if abs(trajectory[0,-1] - r_f) < 100:
+        rendezvous_point.set_data(trajectory[1,-1], r_f)
     ax.set_rmax(max(r_i, r_f)*1.1)
     
     canvas.draw()
@@ -121,7 +127,8 @@ r_f = 1058.0 + R
 delta_longitude_degrees = DoubleVar()
 burn_distance = DoubleVar(value = 1000)
 transfer_duration = DoubleVar(value = 1)
-initial_state = np.array([[r_i, 0], [0, ang_speed_from_r(r_i)]]) # state vector (r, θ, dr, dθ)
+initial_state = np.array([[r_i, 0], [0, circular_orbit_dtheta(r_i)]]) # state vector (r, θ, dr, dθ)
+print(initial_state)
 radial_deltav = DoubleVar(value = 0)
 tangential_deltav = DoubleVar(value = 0)
 
@@ -165,8 +172,8 @@ radial_scale = ttk.Scale(
     scales_frame, 
     orient=VERTICAL, 
     length=200, 
-    from_=-5.0, 
-    to=5.0, 
+    from_=5.0, 
+    to=-5.0, 
     variable=radial_deltav,
     command=burn_changed)
 radial_scale.grid(column = 0, row = 0)
@@ -214,6 +221,9 @@ ax.grid(False)              # No grids
 canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
 
 canvas.get_tk_widget().grid(column = 4, row = 0, padx = 4, pady = 4)
+
+trajectory = calc_trajectory()
+update_plot(trajectory)
 
 def on_closing():
     root.destroy()
