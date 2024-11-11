@@ -104,16 +104,25 @@ def update_parameters(trajectory):
         transfer_duration_mins.set("∞")
     try:
         burn_AoE.set(round(math.degrees(math.atan(radial_deltav.get()/tangential_deltav.get())),1))
+        burn_AoE.set(math.copysign(burn_AoE.get(), radial_deltav.get()))
     except ZeroDivisionError:
-        burn_AoE.set(0)
+        burn_AoE.set(90)
     burn_deltav.set(round(np.sqrt(radial_deltav.get()**2 + tangential_deltav.get()**2)*1000,1))
     burn_distance.set(round((np.sqrt(r_i**2+r_f**2 - 2*r_i*r_f*math.cos(delta_longitude_radians))), 1))
     try:
         after_FPA.set(round(math.degrees(math.atan(radial_deltav.get()/(circular_orbit_speed(r_i)*r_i+tangential_deltav.get()))),1))
     except ZeroDivisionError:
-        after_FPA.set(0)
+        after_FPA.set(90)
     
     after_speed.set(round((math.sqrt((radial_deltav.get())**2+(circular_orbit_speed(r_i)*r_i+tangential_deltav.get())**2))*1000,1))
+    
+    # set appropriate ship sprite for burn AoE
+    if tangential_deltav.get() >= 0:
+        sprite_num = int(round(-burn_AoE.get()/15, 0))+6
+    else:
+        sprite_num = int(round(burn_AoE.get()/15, 0))+18
+    
+    ship_sprite_label['image'] = sprites[sprite_num]
     return
 
 def update_plot(trajectory):
@@ -185,25 +194,21 @@ burn_distance_label = ttk.Label(metrics_frame, textvariable = burn_distance)
 burn_distance_label.grid(column = 1, row = 3)
 ttk.Label(metrics_frame, text="km").grid(column = 2, row = 3)
 
-# burn AoE
 ttk.Label(metrics_frame, text = "Burn AoE").grid(column = 0, row = 4)
 burn_distance_label = ttk.Label(metrics_frame, textvariable = burn_AoE)
 burn_distance_label.grid(column = 1, row = 4)
 ttk.Label(metrics_frame, text="⁰").grid(column = 2, row = 4)
 
-# burn deltaV
 ttk.Label(metrics_frame, text = "Burn deltaV").grid(column = 0, row = 5)
 burn_distance_label = ttk.Label(metrics_frame, textvariable = burn_deltav)
 burn_distance_label.grid(column = 1, row = 5)
 ttk.Label(metrics_frame, text="m/s").grid(column = 2, row = 5)
 
-# post-burn FPA
 ttk.Label(metrics_frame, text = "Post burn FPA").grid(column = 0, row = 6)
 burn_distance_label = ttk.Label(metrics_frame, textvariable = after_FPA)
 burn_distance_label.grid(column = 1, row = 6)
 ttk.Label(metrics_frame, text="⁰").grid(column = 2, row = 6)
 
-# post-burn speed
 ttk.Label(metrics_frame, text = "Post burn speed").grid(column = 0, row = 7)
 burn_distance_label = ttk.Label(metrics_frame, textvariable = after_speed)
 burn_distance_label.grid(column = 1, row = 7)
@@ -236,6 +241,21 @@ tangential_scale = ttk.Scale(
     variable=tangential_deltav,
     command=burn_changed)
 tangential_scale.grid(column = 1, row = 1)
+
+ship_sprite_label = ttk.Label(scales_frame, justify = 'center')
+ship_sprite_label.grid(column = 1, row = 0)
+
+sprites = []
+# import right-facing ship sprites
+for i in range(13):
+    sprites.append(PhotoImage(file=f"ship_sprites/ship_right{i}.png"))
+
+# import left-facing ship sprites
+for i in range(11):
+    sprites.append(PhotoImage(file=f"ship_sprites/ship_left{i+1}.png"))
+
+# now sprites[x] represents the xth clockwise rotation of the ship by 15
+# degrees, starting vertically up at 0.
 
 # ~ set up canvas for orbit plots
 fig, ax = plt.subplots(subplot_kw={'projection': 'polar'}, figsize = [9, 9], layout = "tight")
