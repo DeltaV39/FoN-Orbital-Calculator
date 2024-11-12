@@ -256,6 +256,7 @@ for i in range(11):
 
 # now sprites[x] represents the xth clockwise rotation of the ship by 15
 # degrees, starting vertically up at 0.
+ship_sprite_label['image'] = sprites[6]
 
 # ~ set up canvas for orbit plots
 fig, ax = plt.subplots(subplot_kw={'projection': 'polar'}, figsize = [9, 9], layout = "tight")
