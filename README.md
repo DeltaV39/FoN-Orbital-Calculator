@@ -17,7 +17,7 @@ Enter the altitude of your current orbit and the altitude of your target. The "D
 
 ## Standard version (Hohmann transfer calculator)
 This version is contained in the program `FoN-orbit-calc.py`.
-When the difference between your longitude and the station's longitude is at the right value (or if the distance to the target is the value given by the calculator), burn so that your orbit just touches that of the target. So if you are ascending, you should match your apoapsis with the target's altitude, and if you're descending, match your periapsis with target's altitude. Then, wait :)
+When the difference between your longitude and the station's longitude is at the right value (or if the distance to the target is the value given by the calculator), burn so that your orbit just touches that of the target. So if you are ascending, you should match your apoapsis with the target's altitude; if you're descending, match your periapsis with target's altitude. Then, wait :)
 
 ### Glossary of parameters
 Burn delta longitude: The difference in longitude between your ship and your target at the point when you should burn. Positive values mean the station should be 'ahead' of you in its orbit (its longitude should be higher than yours), while negative values mean it should be 'behind' (its longitude should be lower than yours).
