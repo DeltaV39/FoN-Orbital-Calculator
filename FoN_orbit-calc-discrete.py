@@ -107,6 +107,7 @@ def update_parameters(trajectory):
         burn_AoE.set(math.copysign(burn_AoE.get(), radial_deltav.get()))
     except ZeroDivisionError:
         burn_AoE.set(90)
+        burn_AoE.set(math.copysign(burn_AoE.get(), radial_deltav.get()))
     burn_deltav.set(round(np.sqrt(radial_deltav.get()**2 + tangential_deltav.get()**2)*1000,1))
     burn_distance.set(round((np.sqrt(r_i**2+r_f**2 - 2*r_i*r_f*math.cos(delta_longitude_radians))), 1))
     try:
