@@ -11,79 +11,54 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Circle
 
 
-R = 6350000	# Radius of NVA-3
+R = 6350000 # Radius of NVA-3
 mu = 398600441800000 # Standard gravitational parameter of NVA-3 (assuming identical mass to earth)
 
 def ellipse_TA_from_radius(r, a, ecc):
-	return(np.acos((a*(1-ecc**2))/(r*ecc)))
+    return(np.acos((a*(1-ecc**2))/(r*ecc)))
 
-def recalc_burn_params(r_i, r_f, a = 0, c = 0, speed = False):
-	delta_longitude_degrees.set(180 * (1 - np.power((r_i + r_f)/(2*r_f), 3/2)))	# the formula :O
-	delta_longitude_degrees.set(round(delta_longitude_degrees.get() % (360*np.sign(delta_longitude_degrees.get())), 2))	# can be optimised
-	if abs(delta_longitude_degrees.get()) > 180:
-		delta_longitude_degrees.set(360 - abs(delta_longitude_degrees.get()))	# can DEFINITELY be optimised
-	
-	burn_distance.set(round(np.sqrt(r_i**2+r_f**2 - 2*r_i*r_f*np.cos(np.radians(delta_longitude_degrees.get())))/1000, 2))
-	
-	transfer_duration.set(round((np.pi*np.sqrt((((r_i+r_f)/2)**3)/mu))/60, 1))
-	
-	if not speed:
-	
-		c = -(r_f-r_i)/2
-	
-		a = (r_i+r_f)/2
-	
-	update_plot(r_i, r_f, a, c, speed)
+def recalc_burn_params(r_i, r_f, a = 0, c = 0):
+    delta_longitude_degrees.set(180 * (1 - np.power((r_i + r_f)/(2*r_f), 3/2))) # the formula :O
+    delta_longitude_degrees.set(round(delta_longitude_degrees.get() % (360*np.sign(delta_longitude_degrees.get())), 2)) # can be optimised
+    if abs(delta_longitude_degrees.get()) > 180:
+        delta_longitude_degrees.set(360 - abs(delta_longitude_degrees.get()))   # can DEFINITELY be optimised
+    
+    burn_distance.set(round(np.sqrt(r_i**2+r_f**2 - 2*r_i*r_f*np.cos(np.radians(delta_longitude_degrees.get())))/1000, 2))
+    
+    transfer_duration.set(round((np.pi*np.sqrt((((r_i+r_f)/2)**3)/mu))/60, 1))
+    
+    c = -(r_f-r_i)/2
+    
+    a = (r_i+r_f)/2
+    
+    update_plot(r_i, r_f, a, c)
 
-def update_plot(r_i, r_f, a, c, speed):
-	theta = np.linspace(0, 2*np.pi, num = 1000)
-	r_transfer = (-a**2 +c**2)/(-a + c*np.cos(theta))
-	
-	initial_orbit.set_data(theta, np.full_like(theta, r_i))
-	final_orbit.set_data(theta, np.full_like(theta, r_f))
-	transfer_orbit.set_data(theta[:theta.size//2], r_transfer[:theta.size//2])
-	transfer_orbit_trace.set_data(theta[theta.size//2:], r_transfer[theta.size//2:])
-	ship.set_data(0, r_i)
-	station.set_data(np.radians(delta_longitude_degrees.get()), r_f)
-	if not speed:
-		rendezvous_point.set_data(np.pi, r_f)
-	else:
-		intercept_angle = 
-	ax.set_rmax(max(r_i, r_f)*1.1)
-	
-	canvas.draw()
-	return
+def update_plot(r_i, r_f, a, c):
+    theta = np.linspace(0, 2*np.pi, num = 1000)
+    r_transfer = (-a**2 +c**2)/(-a + c*np.cos(theta))
+    
+    initial_orbit.set_data(theta, np.full_like(theta, r_i))
+    final_orbit.set_data(theta, np.full_like(theta, r_f))
+    transfer_orbit.set_data(theta[:theta.size//2], r_transfer[:theta.size//2])
+    transfer_orbit_trace.set_data(theta[theta.size//2:], r_transfer[theta.size//2:])
+    ship.set_data(0, r_i)
+    station.set_data(np.radians(delta_longitude_degrees.get()), r_f)
+    rendezvous_point.set_data(np.pi, r_f)
+    ax.set_rmax(max(r_i, r_f)*1.1)
+    
+    canvas.draw()
+    return
 
 def altitude_changed(*args):
-	try:
-		r_i = a_i.get()*1000 + R
-		r_f = a_f.get()*1000 + R
-	
-	except TclError:
-		return
-	
-	if r_i > r_f:
-		speed_factor.set(1.0)
-		speed_scale.configure(state = "disabled")
-	else:
-		speed_scale.configure(state = "enabled")
-	recalc_burn_params(r_i, r_f)
-	return
-
-def speed_changed(*args):
-	try:
-		r_i = a_i.get()*1000 + R
-		r_f = a_f.get()*1000 + R
-	
-	except TclError:
-		return
-	
-	c = -(r_f * float(speed_factor.get()) - r_i)/2
-	
-	a = (r_i + r_f * float(speed_factor.get()))/2
-	
-	recalc_burn_params(r_i, r_f, a, c, speed = True)
-	return
+    try:
+        r_i = a_i.get()*1000 + R
+        r_f = a_f.get()*1000 + R
+    
+    except TclError:
+        return
+    
+    recalc_burn_params(r_i, r_f)
+    return
 
 root = Tk()
 root.wm_title("Inter-orbital Rendezvous Calculator")
@@ -93,7 +68,6 @@ a_f = DoubleVar(value = 1058.0)
 delta_longitude_degrees = DoubleVar()
 burn_distance = DoubleVar(value = 1000)
 transfer_duration = DoubleVar(value = 1)
-speed_factor = StringVar()
 
 frm = ttk.Frame(root, padding=10)
 frm.grid()
@@ -124,11 +98,6 @@ ttk.Label(frm, text = "Transfer duration").grid(column = 0, row = 4)
 transfer_duration_label = ttk.Label(frm, textvariable = transfer_duration)
 transfer_duration_label.grid(column = 1, row = 4)
 ttk.Label(frm, text="min").grid(column = 2, row = 4)
-
-ttk.Label(frm, text = "Speed factor").grid(column = 0, row = 5)
-speed_scale = ttk.Scale(frm, orient="horizontal", length=150, from_=1.0, to=2.0, variable = speed_factor)
-speed_scale.grid(column = 1, row = 5)
-speed_factor.trace_add("write", speed_changed)
 
 # ~ set up canvas for orbit plots
 
@@ -161,8 +130,8 @@ station, = ax.plot(np.radians(delta_longitude_degrees.get()), r_f, color = "skyb
 rendezvous_point, = ax.plot(np.pi, r_f, color = "orange", marker = "X", markersize = 12)
 
 ax.set_rmax(max(r_i, r_f)*1.1)
-ax.set_rticks([])	# No radial ticks
-ax.set_rgrids([])	# No radial grids
+ax.set_rticks([])   # No radial ticks
+ax.set_rgrids([])   # No radial grids
 ax.set_theta_offset(np.pi)
 ax.set_theta_direction(-1)
 ax.set_thetagrids([])
@@ -176,8 +145,8 @@ canvas.get_tk_widget().grid(column = 4, row = 0, padx = 4, pady = 4)
 
 
 def on_closing():
-	root.destroy()
-	quit()
+    root.destroy()
+    quit()
 
 root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
