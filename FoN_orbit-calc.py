@@ -41,9 +41,9 @@ def update_plot(r_i, r_f, a, c):
     final_orbit.set_data(theta, np.full_like(theta, r_f))
     transfer_orbit.set_data(theta[:theta.size//2], r_transfer[:theta.size//2])
     transfer_orbit_trace.set_data(theta[theta.size//2:], r_transfer[theta.size//2:])
-    ship.set_data(0, r_i)
-    station.set_data(np.radians(delta_longitude_degrees.get()), r_f)
-    rendezvous_point.set_data(np.pi, r_f)
+    ship.set_data([0], [r_i])
+    station.set_data([np.radians(delta_longitude_degrees.get())], [r_f])
+    rendezvous_point.set_data([np.pi], [r_f])
     ax.set_rmax(max(r_i, r_f)*1.1)
     
     canvas.draw()
