@@ -130,12 +130,12 @@ def update_plot(trajectory):
     initial_orbit.set(radius = r_i)
     final_orbit.set(radius = r_f)
     transfer_orbit.set_data(trajectory[1],trajectory[0])
-    ship.set_data(0, r_i)
+    ship.set_data([0], [r_i])
     if encounter_exists:
-        rendezvous_point.set_data(trajectory[1,-1], r_f)    # set orange cross at the end of the trajectory
+        rendezvous_point.set_data([trajectory[1,-1]], [r_f])    # set orange cross at the end of the trajectory
         rendezvous_point.set_visible(True)
         # set station location
-        station.set_data(delta_longitude_radians, r_f)   # put station where it would be at the time of the burn
+        station.set_data([delta_longitude_radians], [r_f])   # put station where it would be at the time of the burn
         station.set_visible(True)
     else:
         rendezvous_point.set_visible(False)
