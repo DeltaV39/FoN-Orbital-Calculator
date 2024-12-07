@@ -48,10 +48,10 @@ def calc_trajectory():
     global encounter_exists, initial_state
     result = [initial_state]
     while(
-        (result[-1][0,1] < math.tau)
-        and (result[-1][0,0] > R)
-        and (abs(result[-1][0,0] - r_f) > 10)
-        and len(result) < 7200
+        (result[-1][0,1] < math.tau)    # Don't integrate past a full orbit
+        and (result[-1][0,0] > R)       # Don't integrate past hitting the ground
+        and (abs(result[-1][0,0] - r_f) > 10)   # Stop when within 10km of target altitude
+        and len(result) < 7200          # who would want a transfer to take over 2 hours lol
         ):
         result.append(velocity_verlet(gravity_ODE, result[-1], 1))
     
@@ -91,6 +91,7 @@ def burn_changed(*args):
 
 def update_parameters(trajectory):
     global delta_longitude_radians
+    global planetfall_distance
     if encounter_exists:
         transfer_duration_secs = trajectory.shape[1]    # this works because each step is 1 second after the last
         transfer_duration_mins.set(round(transfer_duration_secs/60,1)) 
@@ -101,7 +102,12 @@ def update_parameters(trajectory):
     else:
         delta_longitude_degrees.set("N/A")
         burn_distance.set("N/A")
-        transfer_duration_mins.set("∞")
+        transfer_duration_mins.set(math.inf)
+        final_position = trajectory[:, -1]
+        if final_position[0] <= R:
+            planetfall_distance.set(round(math.sqrt(r_i**2 + final_position[0]**2 - 2*r_i*final_position[0]*math.cos(final_position[1])), 1))
+        else:
+            planetfall_distance.set(math.inf)
     try:
         burn_AoE.set(round(math.degrees(math.atan(radial_deltav.get()/tangential_deltav.get())),1))
         burn_AoE.set(math.copysign(burn_AoE.get(), radial_deltav.get()))
@@ -161,6 +167,7 @@ after_FPA = DoubleVar(value = 0)        # post-burn FPA
 after_speed = DoubleVar(value = 8000)   # post-burn speed
 
 transfer_duration_mins = DoubleVar(value = 1)
+planetfall_distance = DoubleVar(value = 1)
 encounter_exists = False
 
 r_i = 185.0 + R
@@ -219,6 +226,11 @@ ttk.Label(metrics_frame, text = "Transfer duration").grid(column = 0, row = 8)
 transfer_duration_mins_label = ttk.Label(metrics_frame, textvariable = transfer_duration_mins)
 transfer_duration_mins_label.grid(column = 1, row = 8)
 ttk.Label(metrics_frame, text="min").grid(column = 2, row = 8)
+
+ttk.Label(metrics_frame, text = "Distance to planetfall").grid(column = 0, row = 9)
+planetfall_distance_label = ttk.Label(metrics_frame, textvariable = planetfall_distance)
+planetfall_distance_label.grid(column = 1, row = 9)
+ttk.Label(metrics_frame, text="km").grid(column = 2, row = 9)
 
 scales_frame = ttk.Frame(main_frame, padding=10)
 scales_frame.grid(column = 0, row = 1)
