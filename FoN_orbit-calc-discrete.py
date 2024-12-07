@@ -121,7 +121,7 @@ def update_parameters(trajectory):
     if tangential_deltav.get() >= 0:
         sprite_num = int(round(-burn_AoE.get()/15, 0))+6
     else:
-        sprite_num = int(round(burn_AoE.get()/15, 0))+18
+        sprite_num = (int(round(burn_AoE.get()/15, 0))+18) % 24
     
     ship_sprite_label['image'] = sprites[sprite_num]
     return
