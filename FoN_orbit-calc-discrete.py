@@ -143,9 +143,15 @@ def update_plot(trajectory):
         # set station location
         station.set_data([delta_longitude_radians], [r_f])   # put station where it would be at the time of the burn
         station.set_visible(True)
+        planetfall_point.set_visible(False)
     else:
         rendezvous_point.set_visible(False)
         station.set_visible(False)
+        if planetfall_distance.get() > 14000:
+            planetfall_point.set_visible(False)
+        else:
+            planetfall_point.set_data([trajectory[1, -1]], [trajectory[0, -1]])
+            planetfall_point.set_visible(True)
     ax.set_rmax(max(r_i, r_f)*1.1)
     
     canvas.draw()
@@ -286,11 +292,13 @@ transfer_orbit = Line2D([0,1],[0,1], color = "limegreen")
 ship, = ax.plot(0, 0, color = "white", marker = "^", markersize = 15)
 station, = ax.plot(0, 0, color = "skyblue", marker = "D", markersize = 12)
 rendezvous_point, = ax.plot(0, 0, color = "orange", marker = "X", markersize = 12)
+planetfall_point, = ax.plot(0, 0, color = "lime", marker = "X", markersize = 12)
 
 # make markers draw above orbit lines
 ship.set_zorder(9)
 station.set_zorder(9)
 rendezvous_point.set_zorder(9)
+planetfall_point.set_zorder(9)
 
 ax.add_patch(planet)
 ax.add_patch(initial_orbit)
