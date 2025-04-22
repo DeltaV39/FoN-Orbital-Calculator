@@ -44,6 +44,7 @@ def velocity_verlet(ODE, s, timestep):
     
     return(np.array([x_end, v_end], dtype = float))
 
+# TODO: Add an actual array of times and adaptive timestep
 def calc_trajectory():
     global encounter_exists, initial_state
     result = [initial_state]
@@ -152,7 +153,7 @@ def update_plot(trajectory):
         else:
             planetfall_point.set_data([trajectory[1, -1]], [trajectory[0, -1]])
             planetfall_point.set_visible(True)
-    ax.set_rmax(max(r_i, r_f)*1.1)
+    ax.set_rmax(max(r_i, r_f)*2.0)
     
     canvas.draw()
     return
