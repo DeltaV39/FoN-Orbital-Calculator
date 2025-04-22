@@ -13,7 +13,7 @@ After completing the OS-specific installation of Python, some modules will need 
 
 # Usage
 This program assumes circular initial orbits for both your craft and your target.
-Enter the altitude of your current orbit and the altitude of your target. The "Delta longitude" is the longitude difference between you and your target at which you should perform your burn. Positive values mean the target should be ahead of you in the orbit, negative values mean it should be behind. This allows the target to 'catch up' with you if you are coming from a higher, slower orbit. The reverse applies for a lower, faster orbit.
+Enter the altitude of your current orbit and the altitude of your target. The "Delta longitude" is the longitude difference between you and your target at which you should perform your burn. Positive values mean the target should be ahead of you in the orbit, negative values mean it should be behind. This allows the target to 'catch up' with you if you are coming from a higher, slower orbit, or for you to catch up with it if you are coming from a faster orbit.
 
 ## Standard version (Hohmann transfer calculator)
 This version is contained in the program `FoN-orbit-calc.py`.
