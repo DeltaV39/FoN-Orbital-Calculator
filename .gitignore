@@ -54,3 +54,6 @@ dkms.conf
 # virtual environments
 orbit-calc_venv/
 venv*/
+
+# pycache
+__pycache__/
