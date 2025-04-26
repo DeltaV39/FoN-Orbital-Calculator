@@ -192,11 +192,9 @@ class ReentryCalculator(ttk.Frame):
         return transposed[0]    # Array of shape (2, 2, number_of_iterations), [[r_1 ... r_n, dr_1, ... dr_n], [theta_1, ... theta_n, dtheta1, ... dtheta_n]]
 
     def altitude_changed(self, *args):
-        # ~ global self.r_i, self.r_f, self.initial_state
         try:
             self.r_i = self.a_i.get() + self.planet_R
         except TclError:
-            # ~ print("You entered something strange")
             self.a_i_Entry.winfo_class()
             self.a_i_Entry.configure(style="invalid.TEntry")
             return

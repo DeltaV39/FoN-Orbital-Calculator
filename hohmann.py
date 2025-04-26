@@ -15,7 +15,7 @@ class HohmannCalculator(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         
-        self.planet_R = 6350000 # Radius of NVA-3
+        self.planet_R = 6350 # Radius of NVA-3 in km
         self.mu = 398600441800000 # Standard gravitational parameter of NVA-3 (assuming identical mass to earth)
 
         self.a_i = DoubleVar(value = 185.0)
@@ -26,7 +26,9 @@ class HohmannCalculator(ttk.Frame):
 
         self.frm = ttk.Frame(self, padding=10)
         self.frm.grid()
-
+        
+        self.invalid_outline = ttk.Style()
+        self.invalid_outline.configure("invalid.TEntry", fieldbackground='IndianRed1')
         ttk.Label(self.frm, text="Initial altitude").grid(column=0, row=0)
         self.a_i_Entry = ttk.Entry(self.frm, textvariable = self.a_i)
         self.a_i_Entry.grid(column = 1, row = 0)
@@ -57,8 +59,8 @@ class HohmannCalculator(ttk.Frame):
         # set up self.canvas for orbit plots
 
         self.theta = np.linspace(0, 2*np.pi, num = 1000)
-        self.r_i = self.a_i.get()*1000 + self.planet_R
-        self.r_f = self.a_f.get()*1000 + self.planet_R
+        self.r_i = self.a_i.get() + self.planet_R
+        self.r_f = self.a_f.get() + self.planet_R
 
         # elliptical orbit parameters
 
@@ -107,7 +109,7 @@ class HohmannCalculator(ttk.Frame):
         if abs(self.delta_longitude_degrees.get()) > 180:
             self.delta_longitude_degrees.set(360 - abs(self.delta_longitude_degrees.get()))   # can DEFINITELY be optimised
         
-        self.burn_distance.set(round(np.sqrt(self.r_i**2+self.r_f**2 - 2*self.r_i*self.r_f*np.cos(np.radians(self.delta_longitude_degrees.get())))/1000, 2))
+        self.burn_distance.set(round(np.sqrt(self.r_i**2+self.r_f**2 - 2*self.r_i*self.r_f*np.cos(np.radians(self.delta_longitude_degrees.get()))), 2))
         
         self.transfer_duration.set(round((np.pi*np.sqrt((((self.r_i+self.r_f)/2)**3)/self.mu))/60, 1))
         
@@ -135,11 +137,19 @@ class HohmannCalculator(ttk.Frame):
 
     def altitude_changed(self, *args):
         try:
-            self.r_i = self.a_i.get()*1000 + self.planet_R
-            self.r_f = self.a_f.get()*1000 + self.planet_R
-        
+            self.r_i = self.a_i.get() + self.planet_R
         except TclError:
+            self.a_i_Entry.winfo_class()
+            self.a_i_Entry.configure(style="invalid.TEntry")
+            return
+        try:
+            self.r_f = self.a_f.get() + self.planet_R
+        except TclError:
+            self.a_f_Entry.winfo_class()
+            self.a_f_Entry.configure(style="invalid.TEntry")
             return
         
+        self.a_i_Entry.configure(style="TEntry")
+        self.a_f_Entry.configure(style="TEntry")
         self.recalc_burn_params()
         return

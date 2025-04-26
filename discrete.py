@@ -34,7 +34,6 @@ class DiscreteCalculator(ttk.Frame):
         self.after_speed = DoubleVar(value = 8000)   # post-burn speed
 
         self.transfer_duration_mins = DoubleVar(value = 1)
-        self.planetfall_distance = DoubleVar(value = 1)
         self.encounter_exists = False
 
         self.r_i = 185.0 + self.planet_R
@@ -46,7 +45,9 @@ class DiscreteCalculator(ttk.Frame):
 
         self.metrics_frame = ttk.Frame(self.main_frame, padding=10)
         self.metrics_frame.grid(column = 0, row = 0)
-
+        
+        self.invalid_outline = ttk.Style()
+        self.invalid_outline.configure("invalid.TEntry", fieldbackground='IndianRed1')
         ttk.Label(self.metrics_frame, text="Initial altitude").grid(column=0, row=0)
         self.a_i_Entry = ttk.Entry(self.metrics_frame, textvariable = self.a_i)
         self.a_i_Entry.grid(column = 1, row = 0)
@@ -93,11 +94,6 @@ class DiscreteCalculator(ttk.Frame):
         self.transfer_duration_mins_label = ttk.Label(self.metrics_frame, textvariable = self.transfer_duration_mins)
         self.transfer_duration_mins_label.grid(column = 1, row = 8)
         ttk.Label(self.metrics_frame, text="min").grid(column = 2, row = 8)
-
-        ttk.Label(self.metrics_frame, text = "Distance to planetfall").grid(column = 0, row = 9)
-        self.planetfall_distance_label = ttk.Label(self.metrics_frame, textvariable = self.planetfall_distance)
-        self.planetfall_distance_label.grid(column = 1, row = 9)
-        ttk.Label(self.metrics_frame, text="km").grid(column = 2, row = 9)
 
         self.scales_frame = ttk.Frame(self.main_frame, padding=10)
         self.scales_frame.grid(column = 0, row = 1)
@@ -229,12 +225,19 @@ class DiscreteCalculator(ttk.Frame):
         # ~ global self.r_i, self.r_f, self.initial_state
         try:
             self.r_i = self.a_i.get() + self.planet_R
-            self.r_f = self.a_f.get() + self.planet_R
-            self.initial_state = np.array([[self.r_i, 0], [0, self.circular_orbit_speed(self.r_i)+self.tangential_deltav.get()]])
         except TclError:
-            print("You entered something strange")
+            self.a_i_Entry.winfo_class()
+            self.a_i_Entry.configure(style="invalid.TEntry")
             return
-        
+        try:
+            self.r_f = self.a_f.get() + self.planet_R
+        except TclError:
+            self.a_f_Entry.winfo_class()
+            self.a_f_Entry.configure(style="invalid.TEntry")
+            return
+        self.a_i_Entry.configure(style="TEntry")
+        self.a_f_Entry.configure(style="TEntry")
+        self.initial_state = np.array([[self.r_i, 0], [0, self.circular_orbit_speed(self.r_i)+self.tangential_deltav.get()]])
         # update plot with new altitude and trajectory
         self.radial_deltav.set(0)
         self.tangential_deltav.set(0)
@@ -254,8 +257,6 @@ class DiscreteCalculator(ttk.Frame):
         return
 
     def update_parameters(self):
-        # ~ global self.delta_longitude_radians
-        # ~ global self.planetfall_distance
         if self.encounter_exists:
             transfer_duration_secs = self.trajectory.shape[1]    # this works because each step is 1 second after the last
             self.transfer_duration_mins.set(round(transfer_duration_secs/60,1))
@@ -268,10 +269,6 @@ class DiscreteCalculator(ttk.Frame):
             self.burn_distance.set("N/A")
             self.transfer_duration_mins.set(math.inf)
             final_position = self.trajectory[:, -1]
-            if final_position[0] <= self.planet_R:
-                self.planetfall_distance.set(round(math.sqrt(self.r_i**2 + final_position[0]**2 - 2*self.r_i*final_position[0]*math.cos(final_position[1])), 1))
-            else:
-                self.planetfall_distance.set(math.inf)
         try:
             self.burn_AoE.set(round(math.degrees(math.atan(self.radial_deltav.get()/self.tangential_deltav.get())),1))
             self.burn_AoE.set(math.copysign(self.burn_AoE.get(), self.radial_deltav.get()))
@@ -311,7 +308,7 @@ class DiscreteCalculator(ttk.Frame):
         else:
             self.rendezvous_point.set_visible(False)
             self.station.set_visible(False)
-            if self.planetfall_distance.get() > 14000:
+            if self.trajectory[:, -1][0] >= self.planet_R:
                 self.planetfall_point.set_visible(False)
             else:
                 self.planetfall_point.set_data([self.trajectory[1, -1]], [self.trajectory[0, -1]])
