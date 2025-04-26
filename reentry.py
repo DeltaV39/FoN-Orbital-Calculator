@@ -33,7 +33,6 @@ class ReentryCalculator(ttk.Frame):
         self.planetfall_distance = DoubleVar(value = 1)
 
         self.r_i = 185.0 + self.planet_R
-        self.r_f = 185.0 + self.planet_R
         self.initial_state = np.array([[self.r_i, 0], [0, self.circular_orbit_speed(self.r_i)]]) # state vector [[r, θ], [dr, dθ]]
 
         self.main_frame = ttk.Frame(self, padding=10)
@@ -258,7 +257,7 @@ class ReentryCalculator(ttk.Frame):
         else:
             self.planetfall_point.set_data([self.trajectory[1, -1]], [self.trajectory[0, -1]])
             self.planetfall_point.set_visible(True)
-        self.ax.set_rmax(max(self.r_i, self.r_f, self.trajectory[0].max())*1.1)
+        self.ax.set_rmax(max(self.r_i, self.trajectory[0].max())*1.1)
         
         self.canvas.draw()
         return
