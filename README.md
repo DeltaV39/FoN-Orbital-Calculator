@@ -9,7 +9,7 @@ If you do not have Python 3 on your system, install it from https://www.python.o
 ## Linux
 Python is included in almost all distributions, but not all of these have version 3. To check, type `python --version` or `python3 --version` into the terminal, and if the command is not recognised, or the version is less than 3.12.x, install it according to your distribution or from the above link.
 
-After completing the OS-specific installation of Python, some modules will need to be installed, preferably using `pip install -r requirements.txt`. Finally, download the repository and extract it.
+After completing the OS-specific installation of Python, some modules will need to be installed, preferably using `pip install -r requirements.txt`. You will also need to install Tkinter version 3.12.3 or newer. Python for Windows has an option to install this, but the process is slightly more complicated on Linux. Finally, download the repository and extract it.
 
 # Usage
 Run `FoN-orbit-calc.py`. Use the tabs at the top to select the type of maneuver to calculate.
